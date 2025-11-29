@@ -43,4 +43,13 @@ export class PromocionService {
       throw new NotFoundException(`Promocion con ID ${id} no encontrado`);
     }
   }
+  async findActivas(): Promise<Promocion[]> {
+    const now = new Date();
+    return this.promocionModel.find({
+      activa: true,
+      fechaInicio: { $lte: now },
+      fechaFin: { $gte: now },
+    });
+  }
+
 }

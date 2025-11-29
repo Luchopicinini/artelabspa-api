@@ -112,6 +112,13 @@ export class ProductoController {
     return { success: true, data };
   }
 
+  @Get('categoria/:categoriaId')
+  @ApiOperation({ summary: 'Productos de arte por categoría' })
+  async findByCategoria(@Param('categoriaId') categoriaId: string) {
+    const data = await this.productoService.findByCategoria(categoriaId);
+    return { success: true, data, total: data.length };
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar Producto' })
   @ApiParam({ name: 'id', description: 'ID del Producto' })

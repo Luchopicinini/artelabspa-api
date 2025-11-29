@@ -112,6 +112,13 @@ export class PromocionController {
     return { success: true, data };
   }
 
+  @Get('activas')
+  @ApiOperation({ summary: 'Promociones activas' })
+  async findActivas() {
+    const data = await this.promocionService.findActivas();
+    return { success: true, data, total: data.length };
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar Promocion' })
   @ApiParam({ name: 'id', description: 'ID del Promocion' })

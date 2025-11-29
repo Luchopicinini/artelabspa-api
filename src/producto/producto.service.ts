@@ -17,8 +17,15 @@ export class ProductoService {
   }
 
   async findAll(): Promise<Producto[]> {
-    const productos = await this.productoModel.find();
+    const productos = await this.productoModel.find()
+      .populate('productor', 'nombre email telefono ubicacion');
     return productos;
+  }
+
+  
+  async findByProductor(productorId: string): Promise<Producto[]> {
+    return this.productoModel.find({ productor: productorId })
+      .populate('productor', 'nombre email telefono ubicacion');
   }
 
   async findOne(id: string | number): Promise<Producto> {
@@ -45,4 +52,9 @@ export class ProductoService {
       throw new NotFoundException(`Producto con ID ${id} no encontrado`);
     }
   }
+  async findByCategoria(categoriaId: string): Promise<Producto[]> {
+    return this.productoModel.find({ categoria: categoriaId })
+      .populate('categoria', 'nombre descripcion');
+  }
+
 }

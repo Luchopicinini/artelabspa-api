@@ -495,6 +495,101 @@
           }
         }
       ]
+    },
+    {
+      "name": "Producto",
+      "item": [
+        {
+          "name": "Materiales por Categoría",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/producto/categoria/{{categoriaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "producto",
+                "categoria",
+                "{{categoriaId}}"
+              ]
+            },
+            "description": "Materiales de arte por categoría"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints específicos de Producto"
+    },
+    {
+      "name": "Promoción",
+      "item": [
+        {
+          "name": "Promociones Activas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/promocion/activas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "promocion",
+                "activas"
+              ]
+            },
+            "description": "Ofertas disponibles"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints específicos de Promoción"
+    },
+    {
+      "name": "Pedido",
+      "item": [
+        {
+          "name": "Mis Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pedido/cliente/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pedido",
+                "cliente",
+                "{{clienteId}}"
+              ]
+            },
+            "description": "Historial de pedidos con promociones"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints específicos de Pedido"
     }
   ],
   "variable": [
