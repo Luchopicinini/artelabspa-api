@@ -7,12 +7,15 @@ import { Pedido, PedidoDocument } from './schemas/pedido.schema';
 import { ClienteProfileService } from '../cliente-profile/cliente-profile.service';
 import { ProductoService } from '../producto/producto.service';
 
+import { PromocionService } from '../promocion/promocion.service';
+
 @Injectable()
 export class PedidoService {
   constructor(
     @InjectModel(Pedido.name) private pedidoModel: Model<PedidoDocument>,
     private clienteProfileService: ClienteProfileService,
     private productoService: ProductoService,
+    private promocionService: PromocionService,
   ) {}
 
   async create(createPedidoDto: CreatePedidoDto, userId: string): Promise<Pedido> {
@@ -40,13 +43,39 @@ export class PedidoService {
       })
     );
 
-    // 3. Calcular total
-    const total = itemsConPrecio.reduce(
+    // 3. Calcular total inicial
+    let total = itemsConPrecio.reduce(
       (sum, item) => sum + item.precio * item.cantidad,
       0
     );
 
-    // 4. Crear el pedido
+    // 4. Aplicar promociones
+    const promociones = await this.promocionService.findActivas();
+    
+    for (const promo of promociones) {
+      if (promo.productos && promo.productos.length > 0) {
+        // Promoción específica para ciertos productos
+        for (const item of itemsConPrecio) {
+          // Verificar si el producto del item está en la lista de promoción
+          // promo.productos puede ser array de ObjectId o strings, asegurar comparación
+          const isIncluded = promo.productos.some(p => p.toString() === item.producto.toString());
+          
+          if (isIncluded) {
+            const descuentoItem = item.precio * (promo.descuento / 100) * item.cantidad;
+            total -= descuentoItem;
+          }
+        }
+      } else {
+        // Promoción global
+        const descuentoGlobal = total * (promo.descuento / 100);
+        total -= descuentoGlobal;
+      }
+    }
+
+    // Asegurar que total no sea negativo
+    total = Math.max(0, total);
+
+    // 5. Crear el pedido
     const nuevoPedido = await this.pedidoModel.create({
       cliente: new Types.ObjectId(clienteId),
       items: itemsConPrecio,
@@ -65,11 +94,24 @@ export class PedidoService {
 
   async findOne(id: string | number): Promise<Pedido> {
     const pedido = await this.pedidoModel.findById(id)
-    .populate('cliente', 'nombre email telefono');
+    .populate('cliente', 'nombre email telefono')
+    .populate('items.producto', 'nombre precio imagen');
     if (!pedido) {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
     }
     return pedido;
+  }
+
+  async findByCliente(clienteId: string): Promise<Pedido[]> {
+    return this.pedidoModel.find({ cliente: new Types.ObjectId(clienteId) })
+      .sort({ createdAt: -1 })
+      .populate('items.producto', 'nombre precio imagen');
+  }
+
+  async findMyPedidos(userId: string): Promise<Pedido[]> {
+    const clienteProfile = await this.clienteProfileService.findByUserId(userId);
+    const clienteId = (clienteProfile as any)._id.toString();
+    return this.findByCliente(clienteId);
   }
 
   async update(id: string | number, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
