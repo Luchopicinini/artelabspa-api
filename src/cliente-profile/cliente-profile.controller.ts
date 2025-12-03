@@ -7,15 +7,14 @@ import {
   Param,
   Request,
   BadRequestException,
-  UploadedFile,
-  UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ClienteProfileService } from './cliente-profile.service';
 import { UpdateClienteProfileDto } from './dto/update-cliente-profile.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as fs from 'fs';
 
 @ApiTags('cliente-profile')
 @ApiBearerAuth()
@@ -37,36 +36,38 @@ export class ClienteProfileController {
     return this.clienteprofileService.update(req.user.id, dto);
   }
 
-  // 🔥 NUEVO → Subir imagen del avatar
+  // 🔥🔥 SUBIR AVATAR (FASTIFY) — ESTE ES EL ENDPOINT NUEVO
   @Post('upload')
   @Roles(Role.CLIENTE)
-  @UseInterceptors(FileInterceptor('image'))
-  @ApiOperation({ summary: 'Subir imagen del avatar' })
-  async uploadAvatar(
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    if (!file) {
-      throw new BadRequestException('La imagen es requerida');
-    }
+  @ApiOperation({ summary: 'Subir avatar (Fastify)' })
+  async uploadAvatar(@Request() req) {
+    const file = await req.file();
 
-    const imageUrl = `https://artelabspa-api.onrender.com/uploads/avatars/${file.filename}`;
+    if (!file) throw new BadRequestException('Imagen requerida');
+
+    const uploadPath = join(process.cwd(), 'uploads', 'avatars');
+    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+
+    const filename = `${Date.now()}-${file.filename}`;
+    const filepath = join(uploadPath, filename);
+
+    const buffer = await file.toBuffer();
+    fs.writeFileSync(filepath, buffer);
 
     return {
       success: true,
-      imageUrl,
+      imageUrl: `/uploads/avatars/${filename}`,
     };
   }
 
   @Get()
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Listar todos los perfiles (Admin)' })
   async findAll() {
     return this.clienteprofileService.findAll();
   }
 
   @Get(':userId')
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Obtener perfil por userId (Admin)' })
   async findByUserId(@Param('userId') userId: string) {
     return this.clienteprofileService.findByUserId(userId);
   }
