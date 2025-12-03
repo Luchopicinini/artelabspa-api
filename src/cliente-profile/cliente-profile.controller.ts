@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Request,
+  BadRequestException,
+  UploadedFile,
+  UseInterceptors
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ClienteProfileService } from './cliente-profile.service';
-import { CreateClienteProfileDto } from './dto/create-cliente-profile.dto';
 import { UpdateClienteProfileDto } from './dto/update-cliente-profile.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('cliente-profile')
 @ApiBearerAuth()
@@ -24,6 +35,26 @@ export class ClienteProfileController {
   @ApiOperation({ summary: 'Actualizar mi perfil' })
   async updateMyProfile(@Request() req, @Body() dto: UpdateClienteProfileDto) {
     return this.clienteprofileService.update(req.user.id, dto);
+  }
+
+  // 🔥 NUEVO → Subir imagen del avatar
+  @Post('upload')
+  @Roles(Role.CLIENTE)
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiOperation({ summary: 'Subir imagen del avatar' })
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new BadRequestException('La imagen es requerida');
+    }
+
+    const imageUrl = `https://artelabspa-api.onrender.com/uploads/avatars/${file.filename}`;
+
+    return {
+      success: true,
+      imageUrl,
+    };
   }
 
   @Get()
