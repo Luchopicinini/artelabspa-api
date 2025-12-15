@@ -49,6 +49,7 @@ export class ProductoController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Crear nuevo Producto' })
+  @ApiResponse({ status: 201, description: 'Producto creado exitosamente' })
   async create(@Body() createProductoDto: CreateProductoDto) {
     const data = await this.productoService.create(createProductoDto);
     return {
@@ -62,7 +63,20 @@ export class ProductoController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.VENDEDOR)
   @Post(':id/upload-image')
+  @ApiOperation({ summary: 'Subir imagen para Producto' })
   @ApiConsumes('multipart/form-data')
+  @ApiParam({ name: 'id', description: 'ID del Producto' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   async uploadImage(
     @Param('id') id: string,
     @Req() request: FastifyRequest,
@@ -78,7 +92,6 @@ export class ProductoController {
     }
 
     const buffer = await data.toBuffer();
-
     const file = {
       buffer,
       originalname: data.filename,
@@ -102,6 +115,8 @@ export class ProductoController {
   // 🟢 LISTAR PRODUCTOS → PÚBLICO (CLIENTE + INVITADO)
   @Public()
   @Get()
+  @ApiOperation({ summary: 'Listar todos los Productos' })
+  @ApiResponse({ status: 200, description: 'Lista de Productos' })
   async findAll() {
     const data = await this.productoService.findAll();
     return { success: true, data, total: data.length };
@@ -110,6 +125,8 @@ export class ProductoController {
   // 🟢 VER PRODUCTO POR ID → PÚBLICO
   @Public()
   @Get(':id')
+  @ApiOperation({ summary: 'Obtener Producto por ID' })
+  @ApiParam({ name: 'id', description: 'ID del Producto' })
   async findOne(@Param('id') id: string) {
     const data = await this.productoService.findOne(id);
     return { success: true, data };
@@ -118,6 +135,7 @@ export class ProductoController {
   // 🟢 PRODUCTOS POR CATEGORÍA → PÚBLICO
   @Public()
   @Get('categoria/:categoriaId')
+  @ApiOperation({ summary: 'Productos de arte por categoría' })
   async findByCategoria(@Param('categoriaId') categoriaId: string) {
     const data = await this.productoService.findByCategoria(categoriaId);
     return { success: true, data, total: data.length };
@@ -127,6 +145,8 @@ export class ProductoController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.VENDEDOR)
   @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar Producto' })
+  @ApiParam({ name: 'id', description: 'ID del Producto' })
   async update(
     @Param('id') id: string,
     @Body() updateProductoDto: UpdateProductoDto,
@@ -144,6 +164,8 @@ export class ProductoController {
   @Roles(Role.ADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Eliminar Producto' })
+  @ApiParam({ name: 'id', description: 'ID del Producto' })
   async remove(@Param('id') id: string) {
     const producto = await this.productoService.findOne(id);
 
@@ -155,7 +177,6 @@ export class ProductoController {
     }
 
     await this.productoService.remove(id);
-
     return { success: true, message: 'Producto eliminado exitosamente' };
   }
 }
